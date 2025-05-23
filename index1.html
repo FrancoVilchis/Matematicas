@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Métodos Numéricos - Interpolación</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            width: 300px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+        label, select, input {
+            display: block;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        fieldset {
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+        legend {
+            font-weight: bold;
+        }
+        input[type="submit"] {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #218838;
+        }
+        .content {
+            display: flex;
+            flex: 1;
+        }
+        .container {
+            width: 300px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .graph-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #ccc;
+            margin-left: 20px;
+            border-radius: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            height: 800px; /* Ensure this has a fixed height for the graph */
+        }
+        canvas {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        .response {
+            height: 100px;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+            background: #eef;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="content">
+        <div class="container">
+            <h1>Métodos Numéricos - Interpolación</h1>
+            <form id="interpolationForm">
+                <label for="method">Selecciona un Método de Interpolación:</label>
+                <select id="method" name="method">
+                    <option value="lagrange">Lagrange</option>
+                    <option value="newton">Newton</option>
+                </select>
+
+                <label for="degree">Seleccione un Grado de la Interpolación:</label>
+                <input type="number" id="degree" name="degree" min="1" value="1" required>
+
+                <fieldset id="pointsContainer">
+                    <legend>Puntos de Interpolación</legend>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Evaluación</legend>
+                    <label for="x">Valor de X a evaluar:</label>
+                    <input type="number" id="x" name="x" step="0.000001" required>
+                    
+                    <label for="realValue">Valor real (opcional):</label>
+                    <input type="number" id="realValue" name="realValue" step="0.0000001">
+                </fieldset>
+
+                <input type="submit" value="Calcular">
+            </form>
+        </div>
+
+        <div class="graph-container">
+            <canvas id="graphCanvas"></canvas>
+        </div>
+    </div>
+
+    <div class="response" id="responseBox">
+        <strong>Resultado:</strong> <span id="resultText">Aún no hay cálculos.</span>
+    </div>
+
+    <script>
+        function updatePoints() {
+            let degree = parseInt(document.getElementById("degree").value);
+            let container = document.getElementById("pointsContainer");
+
+            // Evitar regenerar los mismos campos
+            if (container.dataset.lastDegree == degree) return;
+            container.dataset.lastDegree = degree;
+
+            container.innerHTML = '<legend>Puntos de Interpolación</legend>';
+
+            for (let i = 0; i <= degree; i++) {
+                let div = document.createElement("div");
+                div.classList.add("point-group");
+                div.innerHTML = ` 
+                    <label for="x${i}">X${i}:</label>
+                    <input type="number" id="x${i}" name="x${i}" step="0.000001" required>
+                    
+                    <label for="fx${i}">F(X${i}):</label>
+                    <input type="number" id="fx${i}" name="fx${i}" step="0.000001" required>
+                `;
+                container.appendChild(div);
+            }
+        }
+
+        // Inicializar con el grado por defecto
+        updatePoints();
+
+        // Escuchar cambios en el grado de interpolación
+        document.getElementById("degree").addEventListener("input", updatePoints);
+
+        // Inicializar la gráfica con Chart.js
+        let ctx = document.getElementById('graphCanvas').getContext('2d');
+        let chart = new Chart(ctx, {
+            type: 'scatter',  // Change chart type to 'scatter'
+            data: {
+                datasets: [{
+                    label: 'Puntos de Usuario',
+                    borderColor: 'blue',
+                    backgroundColor: 'blue',
+                    data: [],  // Empty initial data for user points
+                    fill: false,
+                    showLine: true,  // Connect the user points with lines
+                    pointRadius: 5  // Set the size of the points
+                }, {
+                    label: 'Valor Calculado',
+                    borderColor: 'red',
+                    backgroundColor: 'red',
+                    data: [],  // Empty initial data for calculated point
+                    fill: false,
+                    showLine: false,  // Do not connect the calculated point
+                    pointRadius: 7  // Set the size of the calculated point
+                }, {
+                    label: 'Valor Real',
+                    borderColor: 'green',
+                    backgroundColor: 'green',
+                    data: [],  // Empty initial data for real point
+                    fill: false,
+                    showLine: false,
+                    pointRadius: 7  // Set the size of the real point
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { 
+                        title: { display: true, text: 'X' },
+                        type: 'linear',  // X axis should be linear
+                        ticks: { beginAtZero: true }
+                    },
+                    y: { 
+                        title: { display: true, text: 'F(X)' },
+                        ticks: { beginAtZero: true }
+                    }
+                }
+            }
+        });
+
+        // Manejo del formulario
+        document.getElementById("interpolationForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+            let degree = parseInt(document.getElementById("degree").value);
+            let xValues = [], fxValues = [];
+            const method = document.getElementById("method").value;
+
+            // Obtener los valores de los puntos
+            for (let i = 0; i <= degree; i++) {
+                let x = parseFloat(document.getElementById(`x${i}`).value);
+                let fx = parseFloat(document.getElementById(`fx${i}`).value);
+                if (!isNaN(x) && !isNaN(fx)) {
+                    xValues.push(x);
+                    fxValues.push(fx);
+                }
+            }
+
+            let calculatedPoint = { x: parseFloat(document.getElementById("x").value), y: 0 };
+            let realValue = parseFloat(document.getElementById("realValue").value);
+            const Realpoint = { x: parseFloat(document.getElementById("x").value), y: realValue };
+            if (method === 'lagrange') {
+                // Lagrange Interpolation
+                let x = calculatedPoint.x;
+                let result = 0;
+                for (let i = 0; i <= degree; i++) {
+                    let term = fxValues[i];
+                    for (let j = 0; j <= degree; j++) {
+                        if (i === j) continue;
+                        term *= (x - xValues[j]) / (xValues[i] - xValues[j]);
+                    }
+                    result += term;
+                }
+                calculatedPoint.y = result;
+            } else {
+                //Newton Interpolation
+                function newtonInterpolation(xValues, fxValues, x) {
+                    let n = xValues.length;
+                    let dividedDiff = Array(n).fill(0).map(() => Array(n).fill(0));
+                    
+                    // Inicializar la primera columna con valores de f(x)
+                    for (let i = 0; i < n; i++) {
+                        dividedDiff[i][0] = fxValues[i];
+                    }
+                    
+                    // Calcular las diferencias divididas
+                    for (let j = 1; j < n; j++) {
+                        for (let i = 0; i < n - j; i++) {
+                            dividedDiff[i][j] = (dividedDiff[i + 1][j - 1] - dividedDiff[i][j - 1]) / (xValues[i + j] - xValues[i]);
+                        }
+                    }
+                    
+                    // Evaluar el polinomio en x
+                    let result = dividedDiff[0][0];
+                    let product = 1;
+                    for (let i = 1; i < n; i++) {
+                        product *= (x - xValues[i - 1]);
+                        result += dividedDiff[0][i] * product;
+                    }
+                    
+                    return result;
+                }
+                calculatedPoint.y = newtonInterpolation(xValues, fxValues, calculatedPoint.x);
+            }
+
+            // Actualizar los datasets
+            chart.data.datasets[0].data = xValues.map((x, i) => ({
+                x: x,
+                y: fxValues[i]
+            }));
+            chart.data.datasets[1].data = [calculatedPoint];
+            chart.data.datasets[2].data = [Realpoint];
+            // Actualizar gráfica
+            chart.update();
+
+            // Mostrar el resultado
+            let error = realValue ? (realValue - calculatedPoint.y) : 'Sin dato real';
+            let resultText = `Interpolación calculada con ${degree + 1} puntos: ${calculatedPoint.y}`;
+            if (error) resultText += `\nError Real: ${error}`;
+            console.log(resultText);
+            if (!isNaN(error)) {
+                const errorporcentual = (error / realValue) * 100;
+                let er = errorporcentual;
+                resultText += `\nError Porcentual: ${er}%`;
+            }
+            console.log(resultText);
+            document.getElementById("resultText").innerText = resultText;
+        });
+    </script>
+
+</body>
+</html>

@@ -1,303 +1,480 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Métodos Numéricos - Interpolación</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            padding: 20px;
-        }
-        .container {
-            width: 300px;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 10px;
-            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        h1 {
-            font-size: 20px;
-            margin-bottom: 15px;
-        }
-        label, select, input {
-            display: block;
-            width: 100%;
-            margin-bottom: 10px;
-        }
-        fieldset {
-            border: 1px solid #ccc;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-        }
-        legend {
-            font-weight: bold;
-        }
-        input[type="submit"] {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 10px;
-            cursor: pointer;
-        }
-        input[type="submit"]:hover {
-            background-color: #218838;
-        }
-        .content {
-            display: flex;
-            flex: 1;
-        }
-        .container {
-            width: 300px;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 10px;
-            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        .graph-container {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border: 1px solid #ccc;
-            margin-left: 20px;
-            border-radius: 10px;
-            padding: 10px;
-            background: #f9f9f9;
-            height: 800px; /* Ensure this has a fixed height for the graph */
-        }
-        canvas {
-            max-width: 100%;
-            max-height: 100%;
-        }
-        .response {
-            height: 100px;
-            margin-top: 10px;
-            border: 1px solid #ccc;
-            padding: 10px;
-            border-radius: 5px;
-            background: #eef;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Métodos Numéricos - Interpolación</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        padding: 20px;
+        background: #f4f6f9;
+    }
+
+    .content {
+        display: flex;
+        flex: 1;
+        gap: 20px;
+    }
+
+    .container {
+        width: 350px;
+        padding: 20px;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+        font-size: 22px;
+        margin-bottom: 15px;
+        color: #333;
+    }
+
+    h2, h3 {
+        font-size: 16px;
+        color: #666;
+        margin-bottom: 10px;
+    }
+
+    label {
+        font-weight: bold;
+        margin-bottom: 5px;
+        display: block;
+        color: #444;
+    }
+
+    input[type="number"], select {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 12px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        background-color: #fff;
+        font-size: 14px;
+    }
+
+    fieldset {
+        border: 1px solid #ccc;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        background: #f9f9f9;
+    }
+
+    legend {
+        font-weight: bold;
+        color: #333;
+        padding: 0 5px;
+    }
+
+    input[type="submit"] {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        font-size: 14px;
+        border-radius: 6px;
+        cursor: pointer;
+        width: 100%;
+        transition: background 0.2s;
+    }
+
+    input[type="submit"]:hover {
+        background-color: #0056b3;
+    }
+
+    .graph-container {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border: 1px solid #ccc;
+        border-radius: 12px;
+        padding: 10px;
+        background: #fff;
+        height: 800px;
+    }
+
+    canvas {
+        max-width: 100%;
+        max-height: 100%;
+    }
+
+    .response {
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 10px;
+        background-color: #eef4ff;
+        border: 1px solid #a4c8ff;
+    }
+
+    .response table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+
+    .response th, .response td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: center;
+    }
+
+    .response th {
+        background-color: #dce9ff;
+        font-weight: bold;
+    }
+  </style>
 </head>
 <body>
 
-    <div class="content">
-        <div class="container">
-            <h1>Métodos Numéricos - Interpolación</h1>
-            <form id="interpolationForm">
-                <label for="method">Selecciona un Método de Interpolación:</label>
-                <select id="method" name="method">
-                    <option value="lagrange">Lagrange</option>
-                    <option value="newton">Newton</option>
-                </select>
+<div class="content">
+  <div class="container">
+    <h1>Métodos Numéricos - Ecuaciones No Lineales</h1>
+    <h2>Función:</h2>
+    <h3>F(x) = X³ + X² - 3X - 3</h3>
 
-                <label for="degree">Seleccione un Grado de la Interpolación:</label>
-                <input type="number" id="degree" name="degree" min="1" value="1" required>
+    <form id="nolinealecuationForm">
+      <label for="method">Selecciona un Método:</label>
+      <select id="method" name="method">
+        <option value="biseccion">Bisección</option>
+        <option value="falsa">Falsa Regla</option>
+        <option value="newton">Newton</option>
+        <option value="secante">Secante</option>
+      </select>
 
-                <fieldset id="pointsContainer">
-                    <legend>Puntos de Interpolación</legend>
-                </fieldset>
+      <label for="range1">Rango Mínimo:</label>
+      <input type="number" id="range1" name="range1" value="0" required>
 
-                <fieldset>
-                    <legend>Evaluación</legend>
-                    <label for="x">Valor de X a evaluar:</label>
-                    <input type="number" id="x" name="x" step="0.000001" required>
-                    
-                    <label for="realValue">Valor real (opcional):</label>
-                    <input type="number" id="realValue" name="realValue" step="0.0000001">
-                </fieldset>
+      <label for="range2">Rango Máximo:</label>
+      <input type="number" id="range2" name="range2" value="0" required>
 
-                <input type="submit" value="Calcular">
-            </form>
-        </div>
+      <fieldset id="pointsContainer">
+        <legend>Método de búsqueda de dato:</legend>
+        <select id="methodsearch" name="methodsearch" onchange="cambiarInput()">
+          <option value="interacion">Iteraciones</option>
+          <option value="porcentaje">Porcentaje</option>
+        </select>
 
-        <div class="graph-container">
-            <canvas id="graphCanvas"></canvas>
-        </div>
-    </div>
+        <input type="number" id="interacciones" name="interacciones" step="1" min="1" value="10" required>
+        <input type="number" id="error" name="error" step="0.01" min="0" value="0.01" style="display: none;" required>
 
-    <div class="response" id="responseBox">
-        <strong>Resultado:</strong> <span id="resultText">Aún no hay cálculos.</span>
-    </div>
+      </fieldset>
 
-    <script>
-        function updatePoints() {
-            let degree = parseInt(document.getElementById("degree").value);
-            let container = document.getElementById("pointsContainer");
+      <input type="submit" value="Calcular">
+    </form>
+  </div>
 
-            // Evitar regenerar los mismos campos
-            if (container.dataset.lastDegree == degree) return;
-            container.dataset.lastDegree = degree;
+  <div class="graph-container">
+    <canvas id="graphCanvas"></canvas>
+  </div>
+</div>
 
-            container.innerHTML = '<legend>Puntos de Interpolación</legend>';
+<div class="response" id="responseBox">
+  <strong>Resultado:</strong> <span id="resultText">Aún no hay cálculos.</span>
+</div>
 
-            for (let i = 0; i <= degree; i++) {
-                let div = document.createElement("div");
-                div.classList.add("point-group");
-                div.innerHTML = ` 
-                    <label for="x${i}">X${i}:</label>
-                    <input type="number" id="x${i}" name="x${i}" step="0.000001" required>
-                    
-                    <label for="fx${i}">F(X${i}):</label>
-                    <input type="number" id="fx${i}" name="fx${i}" step="0.000001" required>
-                `;
-                container.appendChild(div);
-            }
+<script>
+  function cambiarInput() {
+    const metodo = document.getElementById('methodsearch').value;
+    const interaccionesInput = document.getElementById('interacciones');
+    const errorInput = document.getElementById('error');
+
+    if (metodo === 'interacion') {
+      interaccionesInput.style.display = 'inline';
+      interaccionesInput.required = true;
+      errorInput.style.display = 'none';
+      errorInput.required = false;
+    } else {
+      interaccionesInput.style.display = 'none';
+      interaccionesInput.required = false;
+      errorInput.style.display = 'inline';
+      errorInput.required = true;
+    }
+  }
+
+  function f(x) {
+    return Math.pow(x, 3) + Math.pow(x, 2) - 3 * x - 3;
+  }
+
+  function generateFunctionData(start = -5, end = 5, step = 0.1) {
+    const data = [];
+    for (let x = start; x <= end; x += step) {
+      data.push({ x: parseFloat(x.toFixed(3)), y: f(x) });
+    }
+    return data;
+  }
+
+  let ctx = document.getElementById('graphCanvas').getContext('2d');
+  let chart = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [
+        {
+          label: 'Función f(x)',
+          data: generateFunctionData(),
+          borderColor: 'rgba(0,0,255,0.5)',
+          backgroundColor: 'rgba(0,0,255,0.2)',
+          fill: false,
+          showLine: true,
+          pointRadius: 0,
+          borderWidth: 2
+        },
+        {
+          label: 'Puntos Iniciales',
+          borderColor: 'blue',
+          backgroundColor: 'blue',
+          data: [],
+          fill: false,
+          showLine: true,
+          pointRadius: 5
+        },
+        {
+          label: 'Puntos Calculados',
+          borderColor: 'red',
+          backgroundColor: 'red',
+          data: [],
+          fill: false,
+          showLine: false,
+          pointRadius: 7
         }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { title: { display: true, text: 'X' }, type: 'linear' },
+        y: { title: { display: true, text: 'F(X)' } }
+      }
+    }
+  });
 
-        // Inicializar con el grado por defecto
-        updatePoints();
+  function biseccion(x0, x1, valorCorte, modo) {
+    const results = [];
+    let a = x0;
+    let b = x1;
+    let xAnterior = null;
 
-        // Escuchar cambios en el grado de interpolación
-        document.getElementById("degree").addEventListener("input", updatePoints);
+    for (let i = 0; ; i++) {
+      const c = (a + b) / 2;
+      const fc = f(c);
+      const fa = f(a);
+      const xActual = Number(c.toFixed(6));
 
-        // Inicializar la gráfica con Chart.js
-        let ctx = document.getElementById('graphCanvas').getContext('2d');
-        let chart = new Chart(ctx, {
-            type: 'scatter',  // Change chart type to 'scatter'
-            data: {
-                datasets: [{
-                    label: 'Puntos de Usuario',
-                    borderColor: 'blue',
-                    backgroundColor: 'blue',
-                    data: [],  // Empty initial data for user points
-                    fill: false,
-                    showLine: true,  // Connect the user points with lines
-                    pointRadius: 5  // Set the size of the points
-                }, {
-                    label: 'Valor Calculado',
-                    borderColor: 'red',
-                    backgroundColor: 'red',
-                    data: [],  // Empty initial data for calculated point
-                    fill: false,
-                    showLine: false,  // Do not connect the calculated point
-                    pointRadius: 7  // Set the size of the calculated point
-                }, {
-                    label: 'Valor Real',
-                    borderColor: 'green',
-                    backgroundColor: 'green',
-                    data: [],  // Empty initial data for real point
-                    fill: false,
-                    showLine: false,
-                    pointRadius: 7  // Set the size of the real point
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: { 
-                        title: { display: true, text: 'X' },
-                        type: 'linear',  // X axis should be linear
-                        ticks: { beginAtZero: true }
-                    },
-                    y: { 
-                        title: { display: true, text: 'F(X)' },
-                        ticks: { beginAtZero: true }
-                    }
-                }
-            }
+      let error = null;
+      if (xAnterior !== null) {
+        error = Math.abs((xActual - xAnterior) / xActual) * 100;
+      }
+
+      results.push({
+        iteracion: i + 1,
+        x: xActual,
+        fx: Number(fc.toFixed(6)),
+        error: error !== null ? error + "%" : "—"
+      });
+
+      if (modo === "interacion" && (i + 1) >= valorCorte) break;
+      if (modo === "porcentaje" && error !== null && error < valorCorte) break;
+      if (fc === 0 || Math.abs(b - a) < 1e-10) break;
+
+      if (fa * fc < 0) b = c;
+      else a = c;
+
+      xAnterior = xActual;
+    }
+
+    return results;
+  }
+
+  function falsa(x0, x1, valorcorte, modo) {
+    const results = [];
+    let a = x0;
+    let b = x1;
+    let xAnterior = null;
+
+    for (let i = 0; ; i++) {
+      const fa = f(a);
+      const fb = f(b);
+      const c = (a * fb - b * fa) / (fb - fa);
+      const fc = f(c);
+      const xActual = Number(c.toFixed(6));
+
+      let error = null;
+      if (xAnterior !== null) {
+        error = Math.abs((xActual - xAnterior) / xActual) * 100;
+      }
+
+      results.push({
+        iteracion: i + 1,
+        x: xActual,
+        fx: Number(fc.toFixed(6)),
+        error: error !== null ? error + "%" : "—"
+      });
+
+      if (modo === "interacion" && (i + 1) >= valorcorte) break;
+      if (modo === "porcentaje" && error !== null && error < valorcorte) break;
+      if (fc === 0 || Math.abs(b - a) < 1e-10) break;
+
+      if (fa * fc < 0) b = c;
+      else a = c;
+
+      xAnterior = xActual;
+    }
+
+    return results;
+  }
+  function secante(x0, x1, valorcorte, modo) {
+    const results = [];
+    let a = x0;
+    let b = x1;
+    let xAnterior = null;
+
+    for (let i = 0; ; i++) {
+      const fa = f(a);
+      const fb = f(b);
+      const c = b - (fb * (b - a)) / (fb - fa);
+      const fc = f(c);
+      const xActual = Number(c.toFixed(6));
+
+      let error = null;
+      if (xAnterior !== null) {
+        error = Math.abs((xActual - xAnterior) / xActual) * 100;
+      }
+
+      results.push({
+        iteracion: i + 1,
+        x: xActual,
+        fx: Number(fc.toFixed(6)),
+        error: error !== null ? error + "%" : "—"
+      });
+
+      if (modo === "interacion" && (i + 1) >= valorcorte) break;
+      if (modo === "porcentaje" && error !== null && error < valorcorte) break;
+      if (fc === 0 || Math.abs(b - a) < 1e-10) break;
+
+      a = b;
+      b = c;
+
+      xAnterior = xActual;
+    }
+
+    return results;
+  }
+  function newton(x0, valorcorte, modo) {
+    const results = [];
+    let xAnterior = null;
+
+    for (let i = 0; ; i++) {
+      const fx = f(x0);
+      const dfx = 3 * Math.pow(x0, 2) + 2 * x0 - 3;
+      const c = x0 - fx / dfx;
+      const fc = f(c);
+      const xActual = Number(c.toFixed(6));
+
+      let error = null;
+      if (xAnterior !== null) {
+        error = Math.abs((xActual - xAnterior) / xActual) * 100;
+      }
+
+      results.push({
+        iteracion: i + 1,
+        x: xActual,
+        fx: Number(fc.toFixed(6)),
+        error: error !== null ? error + "%" : "—"
+      });
+
+      if (modo === "interacion" && (i + 1) >= valorcorte) break;
+      if (modo === "porcentaje" && error !== null && error < valorcorte) break;
+      if (fc === 0 || Math.abs(xActual - x0) < 1e-10) break;
+
+      x0 = c;
+      xAnterior = xActual;
+    }
+
+    return results;
+  }
+  document.getElementById("nolinealecuationForm").addEventListener("submit", function (event) {
+    try {
+      event.preventDefault();
+
+      const method = document.getElementById("method").value;
+      const methodSearch = document.getElementById("methodsearch").value;
+      const rangemin = parseFloat(document.getElementById("range1").value);
+      const rangemax = parseFloat(document.getElementById("range2").value);
+
+      let valorCorte;
+      if (methodSearch === "interacion") {
+        valorCorte = parseFloat(document.getElementById("interacciones").value);
+      } else {
+        valorCorte = parseFloat(document.getElementById("error").value);
+      }
+
+      if (rangemax < rangemin) {
+        alert("El rango máximo no puede ser menor que el rango mínimo.");
+        return;
+      }
+
+      let results = [];
+      if (method === "biseccion") {
+        results = biseccion(rangemin, rangemax, valorCorte, methodSearch);
+      } else if (method === "falsa") {
+        results = falsa(rangemin, rangemax, valorCorte, methodSearch);
+      } else if (method === "secante") {
+        results = secante(rangemin, rangemax, valorCorte, methodSearch);
+      } else if (method === "newton") {
+        results = newton(rangemin, valorCorte, methodSearch);
+      } else {
+        alert("Método no implementado.");
+      }
+
+      // Actualiza puntos calculados
+      chart.data.datasets[1].data = [{ x: rangemin, y: f(rangemin) }, { x: rangemax, y: f(rangemax) }];
+      chart.data.datasets[2].data = results.map((r) => ({ x: r.x, y: r.fx }));
+      chart.update();
+
+      const responseBox = document.getElementById("responseBox");
+      responseBox.innerHTML = "<strong>Resultado:</strong> <span id='resultText'></span>";
+      const resultText = document.getElementById("resultText");
+
+      const table = document.createElement("table");
+      const headerRow = document.createElement("tr");
+      ["Iteración", "X", "F(X)", "Error %"].forEach((header) => {
+        const th = document.createElement("th");
+        th.textContent = header;
+        headerRow.appendChild(th);
+      });
+      table.appendChild(headerRow);
+
+      results.forEach((result) => {
+        const row = document.createElement("tr");
+        Object.values(result).forEach((value) => {
+          const td = document.createElement("td");
+          td.textContent = value;
+          row.appendChild(td);
         });
+        table.appendChild(row);
+      });
 
-        // Manejo del formulario
-        document.getElementById("interpolationForm").addEventListener("submit", function (event) {
-            event.preventDefault();
-            let degree = parseInt(document.getElementById("degree").value);
-            let xValues = [], fxValues = [];
-            const method = document.getElementById("method").value;
+      responseBox.appendChild(table);
+    } catch (error) {
+      alert("Error: " + error.message);
+    }
+  });
+</script>
 
-            // Obtener los valores de los puntos
-            for (let i = 0; i <= degree; i++) {
-                let x = parseFloat(document.getElementById(`x${i}`).value);
-                let fx = parseFloat(document.getElementById(`fx${i}`).value);
-                if (!isNaN(x) && !isNaN(fx)) {
-                    xValues.push(x);
-                    fxValues.push(fx);
-                }
-            }
-
-            let calculatedPoint = { x: parseFloat(document.getElementById("x").value), y: 0 };
-            let realValue = parseFloat(document.getElementById("realValue").value);
-            const Realpoint = { x: parseFloat(document.getElementById("x").value), y: realValue };
-            if (method === 'lagrange') {
-                // Lagrange Interpolation
-                let x = calculatedPoint.x;
-                let result = 0;
-                for (let i = 0; i <= degree; i++) {
-                    let term = fxValues[i];
-                    for (let j = 0; j <= degree; j++) {
-                        if (i === j) continue;
-                        term *= (x - xValues[j]) / (xValues[i] - xValues[j]);
-                    }
-                    result += term;
-                }
-                calculatedPoint.y = result;
-            } else {
-                //Newton Interpolation
-                function newtonInterpolation(xValues, fxValues, x) {
-                    let n = xValues.length;
-                    let dividedDiff = Array(n).fill(0).map(() => Array(n).fill(0));
-                    
-                    // Inicializar la primera columna con valores de f(x)
-                    for (let i = 0; i < n; i++) {
-                        dividedDiff[i][0] = fxValues[i];
-                    }
-                    
-                    // Calcular las diferencias divididas
-                    for (let j = 1; j < n; j++) {
-                        for (let i = 0; i < n - j; i++) {
-                            dividedDiff[i][j] = (dividedDiff[i + 1][j - 1] - dividedDiff[i][j - 1]) / (xValues[i + j] - xValues[i]);
-                        }
-                    }
-                    
-                    // Evaluar el polinomio en x
-                    let result = dividedDiff[0][0];
-                    let product = 1;
-                    for (let i = 1; i < n; i++) {
-                        product *= (x - xValues[i - 1]);
-                        result += dividedDiff[0][i] * product;
-                    }
-                    
-                    return result;
-                }
-                calculatedPoint.y = newtonInterpolation(xValues, fxValues, calculatedPoint.x);
-            }
-
-            // Actualizar los datasets
-            chart.data.datasets[0].data = xValues.map((x, i) => ({
-                x: x,
-                y: fxValues[i]
-            }));
-            chart.data.datasets[1].data = [calculatedPoint];
-            chart.data.datasets[2].data = [Realpoint];
-            // Actualizar gráfica
-            chart.update();
-
-            // Mostrar el resultado
-            let error = realValue ? (realValue - calculatedPoint.y) : 'Sin dato real';
-            let resultText = `Interpolación calculada con ${degree + 1} puntos: ${calculatedPoint.y}`;
-            if (error) resultText += `\nError Real: ${error}`;
-            console.log(resultText);
-            if (!isNaN(error)) {
-                const errorporcentual = (error / realValue) * 100;
-                let er = errorporcentual;
-                resultText += `\nError Porcentual: ${er}%`;
-            }
-            console.log(resultText);
-            document.getElementById("resultText").innerText = resultText;
-        });
-    </script>
 
 </body>
 </html>
